@@ -1,6 +1,6 @@
 {
-    "name": "aby",
-    "short_name": "aby",
+    "name": "snapfolia_go",
+    "short_name": "snapfolia_go",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

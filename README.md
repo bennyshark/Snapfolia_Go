@@ -1,4 +1,5 @@
-# aby
+<<<<<<< HEAD
+# snapfolia_go
 
 A new Flutter project.
 
@@ -14,3 +15,7 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+=======
+# Snapfolia_mobile_app
+A live leaf classifier mobile app dedicated to FAITH Colleges and Batangas Lake Lands
+>>>>>>> e950cdaba2deea68417953529206e2d894a11e30
