@@ -1,0 +1,2 @@
+- To run the Jupyter notebook file pip install -r path/to/requirements.txt
+- You can create a Conda environment to avoid affecting other dependencies
