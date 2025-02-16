@@ -16,6 +16,7 @@ class _HomePageState extends State<ScanPage> {
   List<TrackedObject> _trackedObjects = [];
   int _frameCount = 0;
   int _nextTrackId = 0;
+  Size? _frameSize; // Store frame size
 
   static const int detectionInterval = 1;
   static const int maxTrackingAge = 15;
@@ -27,6 +28,16 @@ class _HomePageState extends State<ScanPage> {
     _initializeCamera();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Store frame size when dependencies change
+    _frameSize = Size(
+      MediaQuery.of(context).size.width,
+      MediaQuery.of(context).size.height,
+    );
+  }
+
   Future<void> _initializeCamera() async {
     final cameras = await availableCameras();
     _cameraController = CameraController(
@@ -35,10 +46,13 @@ class _HomePageState extends State<ScanPage> {
       enableAudio: false,
     );
     await _cameraController?.initialize();
-    setState(() {
-      _isModelLoaded = true;
-    });
-    _cameraController?.startImageStream(_processCameraImage);
+    if (mounted) {
+      // Check if widget is still mounted
+      setState(() {
+        _isModelLoaded = true;
+      });
+      _cameraController?.startImageStream(_processCameraImage);
+    }
   }
 
   double _calculateIoU(Rect box1, Rect box2) {
@@ -53,8 +67,10 @@ class _HomePageState extends State<ScanPage> {
   }
 
   void _updateTracking(List<dynamic> detections, Size frameSize) {
-    final scaleX = frameSize.width / _cameraController!.value.previewSize!.height;
-    final scaleY = frameSize.height / _cameraController!.value.previewSize!.width;
+    final scaleX =
+        frameSize.width / _cameraController!.value.previewSize!.height;
+    final scaleY =
+        frameSize.height / _cameraController!.value.previewSize!.width;
 
     List<TrackedObject> newTrackedObjects = [];
     List<bool> detectionMatched = List.filled(detections.length, false);
@@ -73,9 +89,12 @@ class _HomePageState extends State<ScanPage> {
 
         final newRect = Rect.fromLTRB(
           boundingBox[0] * scaleX,
-          boundingBox[1] * scaleY - (boundingBox[3] * scaleY * adjustmentFactor),
+          boundingBox[1] * scaleY -
+              (boundingBox[3] * scaleY * adjustmentFactor),
           boundingBox[2] * scaleX,
-          boundingBox[1] * scaleY + (boundingBox[3] * scaleY * heightAdjustmentFactor) - (boundingBox[3] * scaleY * adjustmentFactor),
+          boundingBox[1] * scaleY +
+              (boundingBox[3] * scaleY * heightAdjustmentFactor) -
+              (boundingBox[3] * scaleY * adjustmentFactor),
         );
 
         final iou = _calculateIoU(trackedObj.boundingBox, newRect);
@@ -90,7 +109,8 @@ class _HomePageState extends State<ScanPage> {
         }
       }
 
-      if (!matched && (_frameCount - trackedObj.lastUpdateFrame) < maxTrackingAge) {
+      if (!matched &&
+          (_frameCount - trackedObj.lastUpdateFrame) < maxTrackingAge) {
         newTrackedObjects.add(trackedObj);
       }
     }
@@ -103,9 +123,12 @@ class _HomePageState extends State<ScanPage> {
         newTrackedObjects.add(TrackedObject(
           boundingBox: Rect.fromLTRB(
             boundingBox[0] * scaleX,
-            boundingBox[1] * scaleY - (boundingBox[3] * scaleY * adjustmentFactor),
+            boundingBox[1] * scaleY -
+                (boundingBox[3] * scaleY * adjustmentFactor),
             boundingBox[2] * scaleX,
-            boundingBox[1] * scaleY + (boundingBox[3] * scaleY * heightAdjustmentFactor) - (boundingBox[3] * scaleY * adjustmentFactor),
+            boundingBox[1] * scaleY +
+                (boundingBox[3] * scaleY * heightAdjustmentFactor) -
+                (boundingBox[3] * scaleY * adjustmentFactor),
           ),
           label: detection['tag'],
           confidence: boundingBox[4],
@@ -115,13 +138,19 @@ class _HomePageState extends State<ScanPage> {
       }
     }
 
-    setState(() {
-      _trackedObjects = newTrackedObjects;
-    });
+    if (mounted) {
+      // Check if widget is still mounted before setState
+      setState(() {
+        _trackedObjects = newTrackedObjects;
+      });
+    }
   }
 
   Future<void> _processCameraImage(CameraImage cameraImage) async {
-    if (_cameraController == null || !_isModelLoaded) return;
+    if (_cameraController == null ||
+        !_isModelLoaded ||
+        !mounted ||
+        _frameSize == null) return;
 
     _frameCount++;
 
@@ -135,10 +164,10 @@ class _HomePageState extends State<ScanPage> {
         classThreshold: 0.5,
       );
 
-      _updateTracking(result, Size(
-        MediaQuery.of(context).size.width,
-        MediaQuery.of(context).size.height,
-      ));
+      if (mounted) {
+        // Check again after async operation
+        _updateTracking(result, _frameSize!);
+      }
     }
   }
 
@@ -150,24 +179,23 @@ class _HomePageState extends State<ScanPage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.black26.withOpacity(.5),
         title: Text("Snapfolia Go"),
       ),
-      body: _isModelLoaded? 
-      Stack(
-        children: [
-          SizedBox.expand(
-            child: CameraPreview(_cameraController!),
-          ),
-          CustomPaint(
-            painter: TrackedObjectPainter(_trackedObjects),
-            child: Container(),
-          ),
-        ],
-      )
+      body: _isModelLoaded
+          ? Stack(
+              children: [
+                SizedBox.expand(
+                  child: CameraPreview(_cameraController!),
+                ),
+                CustomPaint(
+                  painter: TrackedObjectPainter(_trackedObjects),
+                  child: Container(),
+                ),
+              ],
+            )
           : const Center(child: CircularProgressIndicator()),
     );
   }
