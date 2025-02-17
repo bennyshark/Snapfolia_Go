@@ -1,6 +1,8 @@
 # Snapfolia_mobile_app
 
-Derived from Snapfolia, Snapfolia Go is a mobile app that provides real-time results simply by scanning a leaf with the device’s camera. The app aims to offer a better user experience, delivering live results even in remote or network-constrained areas.
+Derived from Snapfolia, 
+Snapfolia Go is a mobile app that provides real-time results simply by scanning a leaf with the device’s camera. 
+The app aims to offer a better user experience, delivering live results even in remote or network-constrained areas.
 A live leaf classifier mobile app dedicated to FAITH Colleges, Marian Orchard and Batangas Lake Lands.
 
 
